@@ -587,8 +587,43 @@
     font-size: 0.75rem;
     font-weight: 700;
   }
-  .vignette-badge.A { background: #dbeafe; color: #1d4ed8; }
-  .vignette-badge.B { background: #fce7f3; color: #be185d; }
+  .vignette-badge.A { background: #d1fae5; color: #065f46; }
+  .vignette-badge.B { background: #fce7f3; color: #9d174d; }
+
+  .vignette-legend {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .vignette-legend .legend-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--mid);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    color: var(--mid);
+  }
+  .legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .legend-dot.A { background: #d1fae5; border: 2px solid #065f46; }
+  .legend-dot.B { background: #fce7f3; border: 2px solid #9d174d; }
 
   .btn-export {
     background: #27ae60;
@@ -937,7 +972,7 @@
   <div class="card">
     <div class="thanks-icon">🙏</div>
     <div class="thanks-title">Merci pour votre participation !</div>
-    <div id="participant-badge-wrap" style="text-align:center;margin-bottom:20px;"></div>
+
     <div class="thanks-text">
       Afin de préserver la qualité scientifique de cette étude, nous vous remercions de ne pas diffuser le contenu détaillé du questionnaire (situation présentée, questions ou objectifs spécifiques) auprès de collègues ou de personnes susceptibles d'y participer avant la fin de la collecte des données.
     </div>
@@ -992,6 +1027,19 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn-export" onclick="exportCSV()">⬇ Exporter CSV</button>
           <button class="btn-export" style="background:#e67e22;" onclick="loadDashboard()">↻ Actualiser</button>
+        </div>
+      </div>
+
+      <!-- Légende vignettes -->
+      <div class="vignette-legend">
+        <span class="legend-title">Légende vignettes</span>
+        <div class="legend-item">
+          <div class="legend-dot A"></div>
+          <span><strong>Vignette A</strong> — Mère inquiète (réaction coopérante au téléphone)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot B"></div>
+          <span><strong>Vignette B</strong> — Mère agacée (réaction fermée au téléphone)</span>
         </div>
       </div>
 
@@ -1089,12 +1137,12 @@ window._onValue = onValue;
 <script>
 // ─── VIGNETTES ───
 const VIGNETTE_A = `<p>Vous êtes professionnel(le) en protection de l'enfance. Vous venez de recevoir une information préoccupante transmise par l'enseignante de Léa, 10 ans, scolarisée en CM2 dans votre secteur. L'enseignante décrit une enfant très changée depuis la rentrée. Léa arrive souvent à l'école avec des vêtements sales et inadaptés à la saison. Elle a été absente 8 demi-journées sur le dernier mois, sans justification. En classe, elle est effacée, pleure facilement, et se fige lorsqu'on lui parle de sa famille. Elle a confié à une camarade qu'elle « préférerait ne pas rentrer chez elle ». L'enseignante précise qu'elle n'avait jamais eu à signaler Léa auparavant, mais qu'elle a également constaté des marques sur ses avant-bras, et qu'elle a hésité pendant plusieurs semaines avant de se décider à appeler.</p>
-<p>Avant de vous rendre sur place, vous contactez la mère par téléphone pour convenir d'un rendez-vous. Lors de cet appel, <strong>la mère semble inquiète et vous demande ce qu'elle peut faire pour que ça aille mieux pour Léa.</strong></p>
+<p>Avant de vous rendre sur place, vous contactez la mère par téléphone pour convenir d'un rendez-vous. Lors de cet appel, la mère semble inquiète et vous demande ce qu'elle peut faire pour que ça aille mieux pour Léa.</p>
 <p>Lors de la visite à domicile, vous observez un appartement en désordre important, peu chauffé. Le réfrigérateur est quasi vide. La mère vous reçoit, visiblement fatiguée. Elle minimise les difficultés décrites par l'école, dit que Léa « a toujours été sensible » et que « ça va aller ». Elle rapporte vivre seule avec sa fille et que le père de Léa a quitté le foyer conjugal depuis quelques mois, sans donner de nouvelles depuis. Elle explique avoir perdu son travail et avoir des difficultés pour retrouver un emploi. Tout au long de la visite, la mère reste distante et répond aux questions calmement.</p>
 <p>Léa est présente lors de la visite. Elle reste collée contre sa mère sur le canapé, elle pose sa main sur le bras de sa mère, se penche contre elle. Elle porte un pull à manches longues malgré la chaleur de la pièce. Elle ne parle pas spontanément et répond aux questions par des haussements d'épaules ou des monosyllabes, les yeux baissés, sans jamais vous regarder directement. Lorsque vous lui proposez de vous montrer sa chambre, elle se lève sans résistance. La chambre est propre, bien rangée, avec des affaires adaptées à son âge (des livres, des jouets, quelques dessins accrochés au mur). Elle contraste nettement avec le reste de l'appartement.</p>`;
 
 const VIGNETTE_B = `<p>Vous êtes professionnel(le) en protection de l'enfance. Vous venez de recevoir une information préoccupante transmise par l'enseignante de Léa, 10 ans, scolarisée en CM2 dans votre secteur. L'enseignante décrit une enfant très changée depuis la rentrée. Léa arrive souvent à l'école avec des vêtements sales et inadaptés à la saison. Elle a été absente 8 demi-journées sur le dernier mois, sans justification. En classe, elle est effacée, pleure facilement, et se fige lorsqu'on lui parle de sa famille. Elle a confié à une camarade qu'elle « préférerait ne pas rentrer chez elle ». L'enseignante précise qu'elle n'avait jamais eu à signaler Léa auparavant, mais qu'elle a également constaté des marques sur ses avant-bras, et qu'elle a hésité pendant plusieurs semaines avant de se décider à appeler.</p>
-<p>Avant de vous rendre sur place, vous contactez la mère par téléphone pour convenir d'un rendez-vous. Lors de cet appel, <strong>la mère semble agacée et vous dit ne pas comprendre pourquoi l'école s'inquiète, et qu'elle gérera comme elle a toujours fait.</strong></p>
+<p>Avant de vous rendre sur place, vous contactez la mère par téléphone pour convenir d'un rendez-vous. Lors de cet appel, la mère semble agacée et vous dit ne pas comprendre pourquoi l'école s'inquiète, et qu'elle gérera comme elle a toujours fait.</p>
 <p>Lors de la visite à domicile, vous observez un appartement en désordre important, peu chauffé. Le réfrigérateur est quasi vide. La mère vous reçoit, visiblement fatiguée. Elle minimise les difficultés décrites par l'école, dit que Léa « a toujours été sensible » et que « ça va aller ». Elle rapporte vivre seule avec sa fille et que le père de Léa a quitté le foyer conjugal depuis quelques mois, sans donner de nouvelles depuis. Elle explique avoir perdu son travail et avoir des difficultés pour retrouver un emploi. Tout au long de la visite, la mère reste distante et répond aux questions calmement.</p>
 <p>Léa est présente lors de la visite. Elle reste collée contre sa mère sur le canapé, elle pose sa main sur le bras de sa mère, se penche contre elle. Elle porte un pull à manches longues malgré la chaleur de la pièce. Elle ne parle pas spontanément et répond aux questions par des haussements d'épaules ou des monosyllabes, les yeux baissés, sans jamais vous regarder directement. Lorsque vous lui proposez de vous montrer sa chambre, elle se lève sans résistance. La chambre est propre, bien rangée, avec des affaires adaptées à son âge (des livres, des jouets, quelques dessins accrochés au mur). Elle contraste nettement avec le reste de l'appartement.</p>`;
 
@@ -1103,9 +1151,23 @@ let currentPage = 1;
 const totalPages = 9;
 let vignetteAssigned = null; // 'A' or 'B'
 
-// Attribution aléatoire 50/50 à l'arrivée
-function assignVignette() {
-  vignetteAssigned = Math.random() < 0.5 ? 'A' : 'B';
+// Attribution alternée strict via compteur Firebase
+// Pair (0, 2, 4…) → A  |  Impair (1, 3, 5…) → B
+async function assignVignette() {
+  let assigned = 'A'; // fallback si Firebase pas encore prêt
+  try {
+    if (window._db) {
+      const counterRef = window._ref(window._db, window._FIREBASE_NODE + '_counter');
+      const snap = await window._get(counterRef);
+      const current = snap.exists() ? snap.val() : 0;
+      assigned = (current % 2 === 0) ? 'A' : 'B';
+      await window._set(counterRef, current + 1);
+    }
+  } catch(e) {
+    console.warn('Compteur Firebase indisponible, fallback aléatoire:', e);
+    assigned = Math.random() < 0.5 ? 'A' : 'B';
+  }
+  vignetteAssigned = assigned;
   document.getElementById('vignette-content').innerHTML =
     vignetteAssigned === 'A' ? VIGNETTE_A : VIGNETTE_B;
 }
@@ -1223,10 +1285,6 @@ async function submitForm() {
       data.participantNumber = count + 1;
 
       await window._push(dbRef, data);
-
-      // Show thanks with participant number
-      document.getElementById('participant-badge-wrap').innerHTML =
-        `<span class="participant-badge">Participant n° ${data.participantNumber}</span>`;
     } else {
       data.participantNumber = '—';
       console.log('Firebase non configuré. Données locales:', data);
@@ -1363,7 +1421,10 @@ function renderDashboard(entries) {
   let tbody = '';
   entries.forEach(e => {
     const d = e.timestamp ? new Date(e.timestamp).toLocaleDateString('fr-FR') : '—';
-    tbody += `<tr>
+    const rowStyle = e.vignette === 'A'
+      ? 'background:#f0fdf4;'
+      : e.vignette === 'B' ? 'background:#fdf2f8;' : '';
+    tbody += `<tr style="${rowStyle}">
       <td>${e.participantNumber || '—'}</td>
       <td>${d}</td>
       <td><span class="vignette-badge ${e.vignette}">${e.vignette}</span></td>
@@ -1440,9 +1501,10 @@ function exportCSV() {
 window.exportCSV = exportCSV;
 
 // ─── INIT ───
-assignVignette();
 initLikerts();
 updateProgress();
+// assignVignette est async (attend le compteur Firebase)
+assignVignette();
 
 // Expose pour onclick
 window.goToPage = goToPage;
