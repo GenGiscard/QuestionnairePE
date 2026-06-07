@@ -1552,6 +1552,15 @@ function renderDashboard(entries) {
   entries.forEach(e => {
     const d = e.timestamp ? new Date(e.timestamp).toLocaleDateString('fr-FR') : '—';
     const rowClass = e.vignette === 'A' ? 'row-A' : e.vignette === 'B' ? 'row-B' : '';
+    // Recalculer la référence si absente (entrées soumises avant l'ajout du champ)
+    if (!e.reference) {
+      const v  = e.vignette || '?';
+      const p  = e.profession_codes || '?';
+      const ex = e.anciennete_code  !== undefined && e.anciennete_code  !== null ? e.anciennete_code  : '?';
+      const s  = e.service_codes    || '?';
+      const dp = e.departement      || '?';
+      e.reference = `V${v}-P${p}-E${ex}-S${s}-D${dp}`;
+    }
     tbody += `<tr class="${rowClass}">
       <td style="font-family:monospace;font-size:0.75rem;font-weight:700;color:#065f46;white-space:nowrap;">${e.reference || '—'}</td>
       <td>${e.participantNumber || '—'}</td>
