@@ -578,7 +578,8 @@
     color: var(--mid);
     vertical-align: top;
   }
-  .data-table tr:nth-child(even) td { background: #f8f7f5; }
+  .data-table tr.row-A td { background: #f0fdf4; }
+  .data-table tr.row-B td { background: #fdf2f8; }
 
   .vignette-badge {
     display: inline-block;
@@ -1027,6 +1028,7 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn-export" onclick="exportCSV()">⬇ Exporter CSV</button>
           <button class="btn-export" style="background:#e67e22;" onclick="loadDashboard()">↻ Actualiser</button>
+          <button class="btn-export" style="background:#c0392b;" onclick="clearAllData()">🗑 Effacer les données</button>
         </div>
       </div>
 
@@ -1098,7 +1100,7 @@
 ═══════════════════════════════════════════════ -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, push, get, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, push, get, set, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
 // ──────────────────────────────────
 // 🔧 CONFIGURATION FIREBASE
@@ -1124,6 +1126,7 @@ window._ref = ref;
 window._push = push;
 window._get = get;
 window._set = set;
+window._remove = remove;
 window._FIREBASE_NODE = FIREBASE_NODE;
 window._DASHBOARD_CODE = DASHBOARD_CODE;
 
@@ -1151,21 +1154,25 @@ let currentPage = 1;
 const totalPages = 9;
 let vignetteAssigned = null; // 'A' or 'B'
 
-// Attribution alternée strict via compteur Firebase
+// Attribution alternée stricte via compteur Firebase
 // Pair (0, 2, 4…) → A  |  Impair (1, 3, 5…) → B
+// Le compteur est LU au chargement (pour choisir la vignette)
+// et INCRÉMENTÉ uniquement à la soumission finale
 async function assignVignette() {
-  let assigned = 'A'; // fallback si Firebase pas encore prêt
+  let assigned = 'A'; // fallback
   try {
     if (window._db) {
       const counterRef = window._ref(window._db, window._FIREBASE_NODE + '_counter');
       const snap = await window._get(counterRef);
       const current = snap.exists() ? snap.val() : 0;
       assigned = (current % 2 === 0) ? 'A' : 'B';
-      await window._set(counterRef, current + 1);
+      // On stocke la valeur courante pour l'incrémenter à la soumission
+      window._vignetteCounterValue = current;
     }
   } catch(e) {
-    console.warn('Compteur Firebase indisponible, fallback aléatoire:', e);
+    console.warn('Compteur Firebase indisponible, fallback al\u00e9atoire:', e);
     assigned = Math.random() < 0.5 ? 'A' : 'B';
+    window._vignetteCounterValue = null;
   }
   vignetteAssigned = assigned;
   document.getElementById('vignette-content').innerHTML =
@@ -1279,12 +1286,18 @@ async function submitForm() {
   try {
     if (window._db) {
       const dbRef = window._ref(window._db, window._FIREBASE_NODE);
-      // Get count first to assign participant number
+      // Numéro de participant
       const snap = await window._get(dbRef);
       const count = snap.exists() ? Object.keys(snap.val()).length : 0;
       data.participantNumber = count + 1;
 
       await window._push(dbRef, data);
+
+      // Incrémenter le compteur d'alternance maintenant que la réponse est enregistrée
+      if (window._vignetteCounterValue !== null && window._vignetteCounterValue !== undefined) {
+        const counterRef = window._ref(window._db, window._FIREBASE_NODE + '_counter');
+        await window._set(counterRef, window._vignetteCounterValue + 1);
+      }
     } else {
       data.participantNumber = '—';
       console.log('Firebase non configuré. Données locales:', data);
@@ -1421,10 +1434,8 @@ function renderDashboard(entries) {
   let tbody = '';
   entries.forEach(e => {
     const d = e.timestamp ? new Date(e.timestamp).toLocaleDateString('fr-FR') : '—';
-    const rowStyle = e.vignette === 'A'
-      ? 'background:#f0fdf4;'
-      : e.vignette === 'B' ? 'background:#fdf2f8;' : '';
-    tbody += `<tr style="${rowStyle}">
+    const rowClass = e.vignette === 'A' ? 'row-A' : e.vignette === 'B' ? 'row-B' : '';
+    tbody += `<tr class="${rowClass}">
       <td>${e.participantNumber || '—'}</td>
       <td>${d}</td>
       <td><span class="vignette-badge ${e.vignette}">${e.vignette}</span></td>
@@ -1484,6 +1495,26 @@ function renderSocioBlock(title, counts, total) {
   html += '</div>';
   return html;
 }
+
+// ─── EFFACER DONNÉES ───
+async function clearAllData() {
+  const confirmed = window.confirm(
+    '⚠️ Attention\n\nCette action supprimera définitivement TOUTES les réponses et remettra le compteur d\u2019alternance à zéro.\n\nCette opération est irréversible. Confirmez-vous ?'
+  );
+  if (!confirmed) return;
+  const confirmed2 = window.confirm('Dernière confirmation : effacer toutes les données ?');
+  if (!confirmed2) return;
+
+  try {
+    await window._remove(window._ref(window._db, window._FIREBASE_NODE));
+    await window._set(window._ref(window._db, window._FIREBASE_NODE + '_counter'), 0);
+    renderDashboard([]);
+    alert('Données effacées. Le compteur d\u2019alternance est remis à zéro.');
+  } catch(e) {
+    alert('Erreur lors de la suppression : ' + e.message);
+  }
+}
+window.clearAllData = clearAllData;
 
 // ─── EXPORT CSV ───
 function exportCSV() {
