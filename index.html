@@ -1453,9 +1453,10 @@ function checkDashCode() {
 async function loadDashboard() {
   if (!db) { alert('Firebase non configuré.'); return; }
   const snap = await get(ref(db, FIREBASE_NODE));
-  if (!snap.exists()) { renderDashboard([]); return; }
+  if (!snap.exists()) { window._lastEntries = []; renderDashboard([]); return; }
   const raw = snap.val();
   const entries = Object.values(raw).sort((a,b) => a.participantNumber - b.participantNumber);
+  window._lastEntries = entries;
   renderDashboard(entries);
 }
 window.loadDashboard = loadDashboard;
@@ -1641,12 +1642,23 @@ window.clearAllData = clearAllData;
 
 // ─── EXPORT CSV ───
 function exportCSV() {
-  const table = document.getElementById('individual-table');
-  if (!table) return;
-  const rows = [...table.querySelectorAll('tr')];
-  const csv = rows.map(r =>
-    [...r.querySelectorAll('th,td')].map(c => `"${c.textContent.replace(/"/g,'""')}"`).join(';')
-  ).join('\n');
+  if (!window._lastEntries || window._lastEntries.length === 0) {
+    alert('Aucune donn\u00e9e \u00e0 exporter. Actualisez le tableau de bord d\'abord.');
+    return;
+  }
+  const headers = [
+    'reference','participantNumber','timestamp','vignette',
+    'q1','q2_brut','q2_inverse','q3','q4','q5','q6','q7_brut','q7_inverse','q8','q9',
+    'q10','q11_lea','q11_mere','q11_contexte','q12',
+    'profession','profession_codes','anciennete','anciennete_code',
+    'service','service_codes','departement'
+  ];
+  const esc = v => '"' + String(v === null || v === undefined ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [headers.map(h => '"' + h + '"').join(';')];
+  window._lastEntries.forEach(e => {
+    rows.push(headers.map(h => esc(e[h])).join(';'));
+  });
+  const csv = rows.join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
   a.download = 'resultats_jugement_decision.csv';
