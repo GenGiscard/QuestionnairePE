@@ -746,7 +746,7 @@
     </div>
 
     <div class="error-msg" id="consent-error">Veuillez cocher la case pour continuer.</div>
-    <button class="btn" onclick="goToPage(2)">Commencer le questionnaire →</button>
+    <button class="btn" id="btn-page-2">Commencer le questionnaire →</button>
   </div>
 </div>
 
@@ -762,7 +762,7 @@
       <!-- Injected by JS -->
     </div>
   </div>
-  <button class="btn" onclick="goToPage(3)">J'ai lu la situation →</button>
+  <button class="btn" id="btn-page-3">J'ai lu la situation →</button>
 </div>
 
 <!-- ─── PAGE 3 : Q1–Q3 ─── -->
@@ -800,7 +800,7 @@
     </div>
   </div>
   <div class="error-msg" id="page3-error">Veuillez répondre à toutes les questions avant de continuer.</div>
-  <button class="btn" onclick="goToPage(4)">Continuer →</button>
+  <button class="btn" id="btn-page-4">Continuer →</button>
 </div>
 
 <!-- ─── PAGE 4 : Q4–Q6 ─── -->
@@ -834,7 +834,7 @@
     </div>
   </div>
   <div class="error-msg" id="page4-error">Veuillez répondre à toutes les questions avant de continuer.</div>
-  <button class="btn" onclick="goToPage(5)">Continuer →</button>
+  <button class="btn" id="btn-page-5">Continuer →</button>
 </div>
 
 <!-- ─── PAGE 5 : Q7–Q9 ─── -->
@@ -868,7 +868,7 @@
     </div>
   </div>
   <div class="error-msg" id="page5-error">Veuillez répondre à toutes les questions avant de continuer.</div>
-  <button class="btn" onclick="goToPage(6)">Continuer →</button>
+  <button class="btn" id="btn-page-6">Continuer →</button>
 </div>
 
 <!-- ─── PAGE 6 : INTRO DÉCISION ─── -->
@@ -884,7 +884,7 @@
       Pour chaque question, choisissez la réponse qui correspond le mieux à ce que vous feriez concrètement dans votre pratique.
     </div>
   </div>
-  <button class="btn" onclick="goToPage(7)">Répondre aux questions →</button>
+  <button class="btn" id="btn-page-7">Répondre aux questions →</button>
 </div>
 
 <!-- ─── PAGE 7 : Q10–Q12 ─── -->
@@ -948,7 +948,7 @@
     </div>
   </div>
   <div class="error-msg" id="page7-error">Veuillez répondre à toutes les questions avant de continuer.</div>
-  <button class="btn" onclick="goToPage(8)">Continuer →</button>
+  <button class="btn" id="btn-page-8">Continuer →</button>
 </div>
 
 <!-- ─── PAGE 8 : SOCIOPRO ─── -->
@@ -1006,7 +1006,7 @@
     </div>
   </div>
   <div class="error-msg" id="page8-error">Veuillez indiquer au minimum votre profession et votre ancienneté.</div>
-  <button class="btn" id="submit-btn" onclick="submitForm()">Envoyer mes réponses</button>
+  <button class="btn" id="submit-btn">Envoyer mes réponses</button>
 
   <div class="loader" id="submit-loader">
     <div class="spinner"></div>
@@ -1058,9 +1058,9 @@
       <p style="margin-bottom:16px;">Entrez le code d'accès pour consulter les résultats.</p>
       <input type="password" id="dash-code-input" placeholder="Code d'accès…"
         style="width:100%;padding:12px;border:2px solid var(--border);border-radius:6px;font-size:1rem;font-family:inherit;margin-bottom:8px;"
-        onkeydown="if(event.key==='Enter')checkDashCode()">
+        id="dash-code-input">
       <div class="error-msg" id="dash-code-error" style="display:none;">Code incorrect.</div>
-      <button class="btn" onclick="checkDashCode()" style="margin-top:8px;">Accéder au tableau de bord</button>
+      <button class="btn" id="btn-dash-login" style="margin-top:8px;">Accéder au tableau de bord</button>
     </div>
   </div>
 
@@ -1073,9 +1073,9 @@
           <div class="meta">Mise à jour en temps réel · Données anonymisées</div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn-export" onclick="exportCSV()">⬇ Exporter CSV</button>
-          <button class="btn-export" style="background:#e67e22;" onclick="loadDashboard()">↻ Actualiser</button>
-          <button class="btn-export" style="background:#c0392b;" onclick="clearAllData()">🗑 Effacer les données</button>
+          <button class="btn-export" id="btn-export-csv">⬇ Exporter CSV</button>
+          <button class="btn-export" style="background:#e67e22;" id="btn-refresh-dash">↻ Actualiser</button>
+          <button class="btn-export" style="background:#c0392b;" id="btn-clear-data">🗑 Effacer les données</button>
         </div>
       </div>
 
@@ -1143,7 +1143,7 @@
 </div>
 
 <!-- Bouton discret d'accès au tableau de bord -->
-<button class="dash-toggle" onclick="toggleDashboard()" title="Accès chercheur">🔒</button>
+<button class="dash-toggle" id="btn-toggle-dash" title="Accès chercheur">🔒</button>
 
 <!-- ═══════════════════════════════════════════════
      FIREBASE + LOGIQUE PRINCIPALE (module unique)
@@ -1660,11 +1660,36 @@ updateProgress();
 // assignVignette est async (attend le compteur Firebase)
 assignVignette();
 
-// Expose pour onclick
-window.goToPage = goToPage;
-window.submitForm = submitForm;
-window.toggleDashboard = toggleDashboard;
-window.checkDashCode = checkDashCode;
+// ─── EVENT LISTENERS ───
+// Dans un type=module le DOM est déjà prêt, pas besoin de DOMContentLoaded
+(function attachListeners() {
+  // Navigation questionnaire
+  const btnMap = {
+    'btn-page-2': () => goToPage(2),
+    'btn-page-3': () => goToPage(3),
+    'btn-page-4': () => goToPage(4),
+    'btn-page-5': () => goToPage(5),
+    'btn-page-6': () => goToPage(6),
+    'btn-page-7': () => goToPage(7),
+    'btn-page-8': () => goToPage(8),
+    'submit-btn':       () => submitForm(),
+    // Dashboard
+    'btn-toggle-dash':  () => toggleDashboard(),
+    'btn-dash-login':   () => checkDashCode(),
+    'btn-export-csv':   () => exportCSV(),
+    'btn-refresh-dash': () => loadDashboard(),
+    'btn-clear-data':   () => clearAllData(),
+  };
+  for (const [id, fn] of Object.entries(btnMap)) {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', fn);
+  }
+  // Champ code dashboard : valider avec Entrée
+  const codeInput = document.getElementById('dash-code-input');
+  if (codeInput) codeInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkDashCode();
+  });
+})();
 
 </script>
 
