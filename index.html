@@ -1146,9 +1146,10 @@
 <button class="dash-toggle" onclick="toggleDashboard()" title="Accès chercheur">🔒</button>
 
 <!-- ═══════════════════════════════════════════════
-     FIREBASE SDK
+     FIREBASE + LOGIQUE PRINCIPALE (module unique)
 ═══════════════════════════════════════════════ -->
 <script type="module">
+
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, push, get, set, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 
@@ -1171,24 +1172,10 @@ const DASHBOARD_CODE = 'Master2PE2025'; // ← Changez ce code d'accès
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-window._db = db;
-window._ref = ref;
-window._push = push;
-window._get = get;
-window._set = set;
-window._remove = remove;
-window._FIREBASE_NODE = FIREBASE_NODE;
-window._DASHBOARD_CODE = DASHBOARD_CODE;
-window._onValue = onValue;
 
-// Signal que Firebase est prêt — résout la Promise attendue par assignVignette
-if (window._firebaseReadyResolve) window._firebaseReadyResolve();
-</script>
 
-<!-- ═══════════════════════════════════════════════
-     LOGIQUE PRINCIPALE
-═══════════════════════════════════════════════ -->
-<script>
+
+
 // ─── VIGNETTES ───
 const VIGNETTE_A = `<p>Vous êtes professionnel(le) en protection de l'enfance. Vous venez de recevoir une information préoccupante transmise par l'enseignante de Léa, 10 ans, scolarisée en CM2 dans votre secteur. L'enseignante décrit une enfant très changée depuis la rentrée. Léa arrive souvent à l'école avec des vêtements sales et inadaptés à la saison. Elle a été absente 8 demi-journées sur le dernier mois, sans justification. En classe, elle est effacée, pleure facilement, et se fige lorsqu'on lui parle de sa famille. Elle a confié à une camarade qu'elle « préférerait ne pas rentrer chez elle ». L'enseignante précise qu'elle n'avait jamais eu à signaler Léa auparavant, mais qu'elle a également constaté des marques sur ses avant-bras, et qu'elle a hésité pendant plusieurs semaines avant de se décider à appeler.</p>
 <p>Avant de vous rendre sur place, vous contactez la mère par téléphone pour convenir d'un rendez-vous. Lors de cet appel, la mère semble inquiète et vous demande ce qu'elle peut faire pour que ça aille mieux pour Léa.</p>
@@ -1206,21 +1193,14 @@ const totalPages = 9;
 let vignetteAssigned = null; // 'A' or 'B'
 
 // Promise résolue dès que le module Firebase (type=module, async) a fini
-const _firebaseReady = new Promise(resolve => { window._firebaseReadyResolve = resolve; });
-
 // Attribution alternée stricte via compteur Firebase
 // Pair (0, 2, 4…) → A  |  Impair (1, 3, 5…) → B
 // Le compteur est LU au chargement, INCRÉMENTÉ uniquement à la soumission
 async function assignVignette() {
-  let assigned = 'A'; // fallback
+  let assigned = 'A';
   try {
-    // Attendre que Firebase soit prêt (max 6 s)
-    await Promise.race([
-      _firebaseReady,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000))
-    ]);
-    const counterRef = window._ref(window._db, window._FIREBASE_NODE + '_counter');
-    const snap = await window._get(counterRef);
+    const counterRef = ref(db, FIREBASE_NODE + '_counter');
+    const snap = await get(counterRef);
     const current = snap.exists() ? snap.val() : 0;
     assigned = (current % 2 === 0) ? 'A' : 'B';
     window._vignetteCounterValue = current;
@@ -1409,19 +1389,19 @@ async function submitForm() {
   const data = collectAnswers();
 
   try {
-    if (window._db) {
-      const dbRef = window._ref(window._db, window._FIREBASE_NODE);
+    if (db) {
+      const dbRef = ref(db, FIREBASE_NODE);
       // Numéro de participant
-      const snap = await window._get(dbRef);
+      const snap = await get(dbRef);
       const count = snap.exists() ? Object.keys(snap.val()).length : 0;
       data.participantNumber = count + 1;
 
-      await window._push(dbRef, data);
+      await push(dbRef, data);
 
       // Incrémenter le compteur d'alternance maintenant que la réponse est enregistrée
       if (window._vignetteCounterValue !== null && window._vignetteCounterValue !== undefined) {
-        const counterRef = window._ref(window._db, window._FIREBASE_NODE + '_counter');
-        await window._set(counterRef, window._vignetteCounterValue + 1);
+        const counterRef = ref(db, FIREBASE_NODE + '_counter');
+        await set(counterRef, window._vignetteCounterValue + 1);
       }
     } else {
       data.participantNumber = '—';
@@ -1460,7 +1440,7 @@ function toggleDashboard() {
 
 function checkDashCode() {
   const code = document.getElementById('dash-code-input').value;
-  if (code === (window._DASHBOARD_CODE || 'Master2PE2025')) {
+  if (code === (DASHBOARD_CODE || 'Master2PE2025')) {
     document.getElementById('dash-login').style.display = 'none';
     document.getElementById('dash-content').style.display = 'block';
     loadDashboard();
@@ -1471,8 +1451,8 @@ function checkDashCode() {
 
 // ─── DASHBOARD LOGIC ───
 async function loadDashboard() {
-  if (!window._db) { alert('Firebase non configuré.'); return; }
-  const snap = await window._get(window._ref(window._db, window._FIREBASE_NODE));
+  if (!db) { alert('Firebase non configuré.'); return; }
+  const snap = await get(ref(db, FIREBASE_NODE));
   if (!snap.exists()) { renderDashboard([]); return; }
   const raw = snap.val();
   const entries = Object.values(raw).sort((a,b) => a.participantNumber - b.participantNumber);
@@ -1649,8 +1629,8 @@ async function clearAllData() {
   if (!confirmed2) return;
 
   try {
-    await window._remove(window._ref(window._db, window._FIREBASE_NODE));
-    await window._set(window._ref(window._db, window._FIREBASE_NODE + '_counter'), 0);
+    await remove(ref(db, FIREBASE_NODE));
+    await set(ref(db, FIREBASE_NODE + '_counter'), 0);
     renderDashboard([]);
     alert('Données effacées. Le compteur d\u2019alternance est remis à zéro.');
   } catch(e) {
@@ -1685,6 +1665,7 @@ window.goToPage = goToPage;
 window.submitForm = submitForm;
 window.toggleDashboard = toggleDashboard;
 window.checkDashCode = checkDashCode;
+
 </script>
 
 </body>
